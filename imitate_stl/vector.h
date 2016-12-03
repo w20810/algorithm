@@ -118,11 +118,37 @@ namespace yxSTL
 				fill_initialze(n ,value);
 			}
 			
-			explicit vector(int n)
+			explicit vector(size_type n)
 			{
 				fill_initialze(n , value_type());
 			}
 			
+			vector(const vector<T>& tmp) //先申请内存，再调用placement new更好
+			{
+				start = allocate_and_fill(tmp.size(), T());
+				copy(tmp.begin(), tmp.end(), start);
+				finish = start + tmp.size();
+				end_of_storage = start + tmp.size();
+			}	
+		
+			vector<T>& operator =(const vector<T>& tmp)
+			{
+				if (capacity() < tmp.size())
+				{
+					deallocate();
+					start = allocate_and_fill(tmp.size(), T());
+					copy(tmp.begin(), tmp.end(), start);
+					finish = start + tmp.size();
+					end_of_storage = start + tmp.size();
+				}
+				else
+				{
+					destroy(begin(), end());
+					copy(tmp.begin(), tmp.end(), begin());
+					finish = begin() + tmp.size();
+				}
+			}	
+
 			~vector()
 			{	
 				deallocate();	
@@ -130,7 +156,13 @@ namespace yxSTL
 			
 			void push_back(const T& value)
 			{
-
+				if (finish != end_of_storage)
+				{
+					construct(end(), value);
+					++finish;
+				}
+				else
+					insert(end(), value);
 			}
 			
 			void pop_back()

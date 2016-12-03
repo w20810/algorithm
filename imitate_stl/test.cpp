@@ -39,5 +39,18 @@ int main()
 		printf("%d ", v2[i].a);
 	printf("\n");
 
+	vector<node > v;
+	v.push_back(node(666));
+	v.push_back(node(777));
+	for (int i = 0; i < v.size(); i++)
+		printf("%d ", v[i].a);
+	printf("\n");
+
+
+	vector<node > nv(v);
+	for (int i = 0; i < v.size(); i++)
+		printf("%d ", nv[i].a);
+	printf("\n");
+
 	return 0;
 }

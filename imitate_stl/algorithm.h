@@ -41,7 +41,16 @@ namespace yxSTL
 		a = b;
 		b = tmp;
 	}
-
+	
+	template <typename Iterator, typename T>
+	Iterator find(Iterator first, Iterator last, const T& value)
+	{
+		Iterator cur = first;
+		for (; cur != last; ++cur)
+			if (value == *cur)
+				break;
+		return cur;	
+	}
 }//end yxSTL
 
 #endif      

@@ -118,11 +118,19 @@ namespace yxSTL
 				fill_initialze(n ,value);
 			}
 			
+			vector(iterator first, iterator last)
+			{
+				start = allocate_and_fill(last - first, T());
+				copy(first, last, start);
+				finish = start + (last - first);
+				end_of_storage = start + (last - first);
+			}
+
 			explicit vector(size_type n)
 			{
 				fill_initialze(n , value_type());
 			}
-			
+				
 			vector(const vector<T>& tmp) //先申请内存，再调用placement new更好
 			{
 				start = allocate_and_fill(tmp.size(), T());

@@ -1,5 +1,4 @@
 //@2016/12/2
-//
 #ifndef ALGORITHM_H
 #define ALGORITHM_H
 
@@ -34,6 +33,7 @@ namespace yxSTL
 		return result;
 	}
 
+	//swap
 	template <typename T>
 	void swap(T& a, T& b)
 	{
@@ -42,6 +42,7 @@ namespace yxSTL
 		b = tmp;
 	}
 	
+	//find
 	template <typename Iterator, typename T>
 	Iterator find(Iterator first, Iterator last, const T& value)
 	{
@@ -52,17 +53,14 @@ namespace yxSTL
 		return cur;	
 	}
 
-	template <typename RandomAccessIterator>
-	void push_heap(RandomAccessIterator first, RandomAccessIterator last)
-	{
-		__push_heap(first, last - first - 1, *(last - 1));
-	}
 	
-	template <typename RandomAccessIterator, typename Distance, typename T>
-	void __push_heap(RandomAccessIterator first, Distance holeIndex, T value)
+	//heap, 实现priority_queue的底层算法
+	//
+	template <typename RandomAccessIterator, typename Distance, typename T, typename Compare>
+	void __push_heap(RandomAccessIterator first, Distance holeIndex, T value, Compare cmp)
 	{
 		Distance parentIndex = (holeIndex - 1) / 2;
-		while (holeIndex != 0 && *(first + parentIndex) < value)
+		while (holeIndex != 0 && cmp(*(first + parentIndex), value))
 		{
 			*(first + holeIndex) = *(first + parentIndex);
 			holeIndex = parentIndex;
@@ -71,22 +69,21 @@ namespace yxSTL
 		*(first + holeIndex) = value;
 	}
 
-	template <typename RandomAccessIterator>
-	void pop_heap(RandomAccessIterator first, RandomAccessIterator last)
+	template <typename RandomAccessIterator, typename Compare>
+	void push_heap(RandomAccessIterator first, RandomAccessIterator last, Compare)
 	{
-		*first = *(last - 1);
-		__adjust_heap(first, last - first - 1, first - first, *first);
+		__push_heap(first, last - first - 1, *(last - 1), Compare());
 	}
 
-	template <typename RandomAccessIterator, typename Distance, typename T>
-	void __adjust_heap(RandomAccessIterator first, Distance len, Distance holeIndex, T value)//从holeIndex处向下调整
+	template <typename RandomAccessIterator, typename Distance, typename T, typename Compare>
+	void __adjust_heap(RandomAccessIterator first, Distance len, Distance holeIndex, T value, Compare cmp)//从holeIndex处向下调整
 	{
 		Distance rSonIndex = holeIndex * 2 + 2;
 		while (rSonIndex < len)
 		{
-			if (*(first + rSonIndex) < *(first + (rSonIndex - 1)))
+			if (cmp(*(first + rSonIndex), *(first + (rSonIndex -1))))
 				--rSonIndex;
-			if (value < *(first + rSonIndex))
+			if (cmp(value, *(first + rSonIndex)))
 			{
 				*(first + holeIndex) = *(first + rSonIndex);
 				holeIndex = rSonIndex;
@@ -95,9 +92,9 @@ namespace yxSTL
 			else
 				break;
 		}
-		if (rSonIndex - 1 == len)
+		if (rSonIndex == len)
 		{
-			if (value < *(first + (rSonIndex - 1)))
+			if (cmp(value, *(first + (rSonIndex - 1))))
 			{
 				*(first + holeIndex) = *(first + (rSonIndex - 1));
 				holeIndex = rSonIndex - 1;
@@ -106,30 +103,37 @@ namespace yxSTL
 		*(first + holeIndex) = value;
 	}
 
-	template <typename RandomAccessIterator>
-	void sort_heap(RandomAccessIterator first, RandomAccessIterator last)
+	template <typename RandomAccessIterator, typename Compare>
+	void pop_heap(RandomAccessIterator first, RandomAccessIterator last, Compare)
 	{
-		while (first - last > 1)
-			pop_heap(first, last--);
+		swap(*first, *(last - 1));
+		__adjust_heap(first, last - first - 1, first - first, *first, Compare());
 	}
 
-	template <typename RandomAccessIterator>
-	void make_heap(RandomAccessIterator first, RandomAccessIterator last)
+	//FIXME:排序前确保是一个堆	
+	template <typename RandomAccessIterator, typename Compare>
+	void sort_heap(RandomAccessIterator first, RandomAccessIterator last, Compare)
 	{
-		__make_heap(first, last - first);
+		while (last - first > 1)
+			pop_heap(first, last--, Compare());
 	}
 
-	template <typename RandomAccessIterator, typename Distance>
-	void __make_heap(RandomAccessIterator first, Distance len)
+	template <typename RandomAccessIterator, typename Distance, typename Compare>
+	void __make_heap(RandomAccessIterator first, Distance len, Compare)
 	{	
 		Distance curIndex = (len - 2) / 2;
 		while (curIndex >= 0)
 		{
-			__adjust_heap(first, len, curIndex, *(first + curIndex));
+			__adjust_heap(first, len, curIndex, *(first + curIndex), Compare());
 			--curIndex;
 		}
 	}
 
+	template <typename RandomAccessIterator, typename Compare>
+	void make_heap(RandomAccessIterator first, RandomAccessIterator last, Compare)
+	{
+		__make_heap(first, last - first, Compare());
+	}
 }//end yxSTL
 
 #endif      

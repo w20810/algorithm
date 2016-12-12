@@ -130,6 +130,180 @@ namespace yxSTL
 		private :
 			link_type	pnode;
 	};
+	
+	//FIXME:为set量身定制，并不支持map(= . =)
+	//先写完，日后改进
+	template <typename T, typename Compare, typename Alloc = allocator<__rb_tree_node<T> > >
+	class rb_tree
+	{
+		private :
+			typedef T			value_type;
+			typedef T*			pointer;
+			typedef T&			reference;
+			typedef const T&	const_reference;
+			typedef const T*	const_pointer;
+			typedef size_t		size_type;	
+			
+			typedef __rb_tree_node<value_type>* link_type;
+			typedef __rb_tree_node<value_type>	node_type;
+
+			typedef Alloc		node_allocator;
+
+		public :
+			typedef __rb_tree_iterator<value_type >		iterator;
+		
+		private :
+			size_type		count_node;
+			link_type		header;
+			Compare			cmp;
+		
+		private :
+			link_type get_node()
+			{
+				return node_allocator::allocate();
+			}
+
+			link_type get_initialized_node(const_reference value)
+			{
+				link_type result = node_allocator::allocate();
+				construct(result, value);
+				return result;
+			}
+
+			void put_node(link_type ptr)
+			{
+				destroy(ptr);
+				node_allocator::deallocate(ptr);
+			}
+
+			void init_tree()
+			{
+				header = get_node();
+				header->father	= header;
+				header->lson	= header;
+				header->rson	= header;
+			}
+
+			link_type& get_root()
+			{
+				return header->father;
+			}
+			
+			void rotate_left(link_type x)
+			{
+				link_type y = x->rson;
+				x->rson = y->lson;
+				if (NULL != y->lson)
+					y->lson->father = x;
+
+				//FIXME:旋转的时候header的左右孩子式不可能变的
+				//若x为root,那么
+				if (x == get_root())
+					get_root() = y;
+				else if (x == x->father->lson)
+					x->father->lson = y;
+				else if (x == x->father->rson)
+					x->father->rson = y;
+				
+				x->father = y;
+				y->lson = x;
+			}
+
+			void rotate_right(link_type x)
+			{
+				link_type y = x->lson;
+				x->lson = y->rson;
+				if (NULL != y->rson)
+					y->rson->father = x;
+
+				//FIXME:旋转的时候header的左右孩子式不可能变的
+				if (x == get_root())
+					get_root() = y;
+				else if (x == x->father->lson)
+					x->father->lson = y;
+				else if (x == x->father->rson)
+					x->father->rson = y;
+
+				x->father = y;
+				y->rson = x;
+			}
+
+			void insert_rebalance(link_type x)
+			{
+				if (x->father->color ) //FIXME:statu(1)
+				{
+
+				}
+			}
+
+			void erase_rebalance(link_type x)
+			{
+
+			}
+
+		public :
+			rb_tree():count_node(0), cmp(Compare())
+			{
+				init_tree();
+			}
+
+			template <typename Comp>
+			rb_tree(Comp c) :count_node(0), cmp(c)
+			{
+				init_tree();
+			}
+
+			size_type size()
+			{
+				return count_node;
+			}
+
+			iterator begin() //隐式类型转换
+			{
+				return header->lson;
+			}
+
+			iterator end()
+			{
+				return header;
+			}
+
+			value_type max()
+			{
+				return header->rson->value;
+			}
+
+			value_type min()
+			{
+				return header->lson->value;
+			}
+
+			bool empty()
+			{
+				return count_node == 0;
+			}
+
+			void insert_unique(value_type x)
+			{
+				
+			}
+
+			void insert(value_type x)
+			{
+
+			}
+
+			void erase(value_type x)
+			{
+				
+			}
+
+			void erase(iterator x)
+			{
+
+			}
+
+	};
 
 }//end of yxSTL
 

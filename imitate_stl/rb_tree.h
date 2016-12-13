@@ -4,6 +4,8 @@
 #include "algorithm.h"
 #include "memory.h"
 
+#include <cstdio>
+
 namespace yxSTL
 {
 	typedef bool __rb_tree_color_type;
@@ -20,9 +22,16 @@ namespace yxSTL
 		__rb_tree_node		*lson;
 		__rb_tree_node		*rson;
 		T					value;
-		__rb_tree_node():color(__rb_tree_red), father(NULL),
-			lson(NULL), rson(NULL),T(){}
 		
+		__rb_tree_node():color(__rb_tree_red), father(NULL),
+			lson(NULL), rson(NULL)
+		{
+		}
+		
+		__rb_tree_node(const T& x) :color(__rb_tree_red), father(NULL),
+			lson(NULL), rson(NULL), value(x)
+		{
+		}
 	};
 	
 	//封装一个指向__rb_tree_node的指针
@@ -48,6 +57,15 @@ namespace yxSTL
 				return pnode->value;
 			}
 
+			bool operator==(const self& x) const
+			{
+				return pnode == x.pnode;
+			}
+
+			bool operator!=(const self& x) const
+			{
+				return pnode != x.pnode;
+			}
 			//作指针操作
 		//	pointer operator->() const
 		//	{
@@ -182,24 +200,58 @@ namespace yxSTL
 				header->father	= header;
 				header->lson	= header;
 				header->rson	= header;
+			//	header->color	= __rb_tree_red; //默认为红色
 			}
 
-			link_type& get_root()
+			link_type get_root()
 			{
+				if (header->father == header)
+					return (link_type)NULL;
 				return header->father;
 			}
 			
+			bool hasSon(link_type x)
+			{
+				return (x->lson || x->rson);
+			}
+
+			link_type& father(link_type x)
+			{
+				return x->father;
+			}
+
+			link_type& ancle(link_type x)
+			{
+			 	if (x->father->father->lson == x->father)
+					return x->father->father->rson;
+				else
+					return x->father->father->lson;
+			}
+
+			link_type& grandpa(link_type x)
+			{
+				return x->father->father;
+			}
+
+			link_type& brother(link_type x)
+			{
+				if (x->father->lson == x)
+					return x->father->rson;
+				else
+					return x->father->lson;
+			}
+
 			void rotate_left(link_type x)
 			{
 				link_type y = x->rson;
 				x->rson = y->lson;
 				if (NULL != y->lson)
 					y->lson->father = x;
+				y->father = x->father;
 
 				//FIXME:旋转的时候header的左右孩子式不可能变的
-				//若x为root,那么
 				if (x == get_root())
-					get_root() = y;
+					header->father = y;
 				else if (x == x->father->lson)
 					x->father->lson = y;
 				else if (x == x->father->rson)
@@ -215,10 +267,11 @@ namespace yxSTL
 				x->lson = y->rson;
 				if (NULL != y->rson)
 					y->rson->father = x;
+				y->father = x->father;
 
 				//FIXME:旋转的时候header的左右孩子式不可能变的
 				if (x == get_root())
-					get_root() = y;
+					header->father = y;
 				else if (x == x->father->lson)
 					x->father->lson = y;
 				else if (x == x->father->rson)
@@ -228,11 +281,70 @@ namespace yxSTL
 				y->rson = x;
 			}
 
-			void insert_rebalance(link_type x)
+			//FIXME:NIL节点默认为黑色
+			void insert_rebalance(link_type x)//FIXME:X为新节点
 			{
-				if (x->father->color ) //FIXME:statu(1)
+				//FIXME:根节点一定为黑色，否则直接改为黑色
+				//这点对下面十分有用
+				//因为父亲节点为根节点，那么就可以不用迭代了，直接返回
+				//因为父节点一定为黑色了
+				if (get_root() == x && __rb_tree_red == x->color)
 				{
+					x->color = __rb_tree_black;
+					return ;
+				}
 
+				if (__rb_tree_black == father(x)->color) //FIXME:father is black
+				{
+					return ;
+				}
+				else //FIXME:father is red
+				{
+					//NIL node's color is black
+					if (ancle(x) && __rb_tree_red == ancle(x)->color)//FIXME:ancle is red
+					{
+						//grandpa must be black
+						ancle(x)->color = __rb_tree_black;
+						father(x)->color = __rb_tree_black;
+
+						//modify the grandpa's color to rad
+						grandpa(x)->color = __rb_tree_red;
+						insert_rebalance(grandpa(x));//iterate to grandpa
+						return ;
+					}
+					else //FIXME:ancle(mabey is NIL) is black
+					{
+						if (x == father(x)->lson && father(x) == grandpa(x)->lson)
+						{
+							father(x)->color = __rb_tree_black;
+							grandpa(x)->color = __rb_tree_red;
+							rotate_right(grandpa(x));
+						}
+						else if (x == father(x)->rson && father(x) == grandpa(x)->lson)
+						{
+							x->color = __rb_tree_black;
+							grandpa(x)->color = __rb_tree_red;
+							rotate_left(father(x));
+							rotate_right(father(x));
+						}
+						else if (x == father(x)->lson && father(x) == grandpa(x)->rson)
+						{
+							x->color = __rb_tree_black;
+							grandpa(x)->color = __rb_tree_red;
+							rotate_right(father(x));
+							//printf("after rotate_right\n");
+							//debug();
+							//printf("after rotate_left\n");
+							rotate_left(father(x));
+							//debug();
+						}
+						else if (x == father(x)->rson && father(x) == grandpa(x)->rson)
+						{
+							father(x)->color = __rb_tree_black;
+							grandpa(x)->color = __rb_tree_red;
+							rotate_left(grandpa(x));
+						}
+					}
 				}
 			}
 
@@ -251,6 +363,22 @@ namespace yxSTL
 			rb_tree(Comp c) :count_node(0), cmp(c)
 			{
 				init_tree();
+			}
+
+			void destroy_tree(link_type x)
+			{
+				if (x->lson)
+					destroy_tree(x->lson);
+				if (x->rson)
+					destroy_tree(x->rson);
+				if (x)
+					put_node(x);
+			}
+
+			~rb_tree()
+			{
+				destroy_tree(get_root());	
+				put_node(header);
 			}
 
 			size_type size()
@@ -283,14 +411,88 @@ namespace yxSTL
 				return count_node == 0;
 			}
 
-			void insert_unique(value_type x)
+			size_type depth()
 			{
-				
+				return depth(get_root());	
 			}
 
-			void insert(value_type x)
+			size_type depth(link_type x)
 			{
+				if (NULL == x)
+					return 0;
+				size_type ldepth = depth(x->lson);
+				size_type rdepth = depth(x->rson);
+				return yxSTL::max(ldepth, rdepth) + (size_type)1;
+			}
 
+			iterator find(const_reference x)
+			{
+				link_type cur = get_root();
+				while (cur != NULL)
+				{
+					if (!cmp(x, cur->value) && !cmp(x, cur->value))
+						return cur; //隐式转换
+					else if (cmp(x, cur->value))
+						cur = cur->lson;
+					else
+						cur = cur->rson;
+				}
+				return end();
+			}
+
+			iterator insert_unique(const_reference x)
+			{
+				if (find(x) != end())
+					return link_type(NULL);
+				return insert(x);
+			}
+
+			iterator insert(const_reference x)
+			{
+				if (NULL == get_root())
+				{
+					link_type node = get_initialized_node(x);
+					node->father = header;
+					node->color  = __rb_tree_black;
+					header->lson = node;
+					header->rson = node;
+					header->father = node;
+					return node;
+				}
+				link_type cur = get_root();
+				link_type node = get_initialized_node(x);
+				while (true)
+				{
+					if (cmp(x, cur->value))
+					{
+						if (NULL == cur->lson)
+						{
+							node->father = cur;
+							cur->lson = node;
+							break;
+						}
+						cur = cur->lson;
+					}
+					else
+					{
+						if (NULL == cur->rson)
+						{
+							node->father = cur;
+							cur->rson =	node;
+							break;
+						}
+						cur = cur->rson;
+					}
+				}
+				if (node == header->lson->lson)
+					header->lson = node;
+				if (node == header->rson->rson)
+					header->rson = node;
+				//printf("insert  %d ok\n", node->value);
+				//debug();
+				insert_rebalance(node);
+				++count_node;
+				return node;
 			}
 
 			void erase(value_type x)
@@ -303,8 +505,25 @@ namespace yxSTL
 
 			}
 
-	};
+			void debug()
+			{
+				printf("[ \n");
+				_debug(get_root());
+				printf("]\n");
+			}
 
+			void _debug(link_type cur)
+			{
+				if (cur)
+				{
+					printf("addr%p (%p %p) value:%d color:%s \n", 
+							cur, cur->lson, cur->rson,
+						   	cur->value, (cur->color?"black":"red"));
+					_debug(cur->lson);
+					_debug(cur->rson);
+				}
+			}
+	};
 }//end of yxSTL
 
 #endif

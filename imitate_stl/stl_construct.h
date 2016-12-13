@@ -12,7 +12,7 @@ namespace yxSTL
 	template <typename T1, typename T2>
 	inline void construct(T1* p, const T2& value)
 	{
-		new (p) T2(value);
+		new (p) T1(value);
 	}
 
 	//此处没有优化，标准STL里面用traits技法对类型进行了判断，

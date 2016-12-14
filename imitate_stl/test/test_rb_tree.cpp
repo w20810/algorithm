@@ -9,37 +9,36 @@ using namespace yxSTL;
 
 void test1()
 {
+	printf("press any key to start test1...\n");
+	getchar();
 	rb_tree<int, std::less<int> > tree;
-	//std::cout<<tree.empty()<<std::endl;
+	if (tree.empty())
+		printf("the tree is empty\n");
 	tree.insert(3);
-	//tree.debug();
 	tree.insert(6);
-//	tree.debug();
 	tree.insert(4);
-//	tree.debug();
 	tree.insert(1);
-//	tree.debug();
 	tree.insert(8);
-//	tree.debug();
 	tree.insert(7);
-	//tree.debug();
 	tree.insert(5);
 	tree.debug();
-	//std::cout<<std::endl;
-//	typedef rb_tree<int, std::less<int> >::iterator it_type;
-//	for (it_type it = tree.begin(); it != tree.end(); ++it)
-//	{
-//		printf("%d \n", *it);
-		
-//	}
+	typedef rb_tree<int, std::less<int> >::iterator it_type;
+	for (it_type it = tree.begin(); it != tree.end(); ++it)
+	{
+		printf("%d \n", *it);	
+	}
+	printf("size:%d\n", tree.size());
+	printf("depth:%d\n", tree.depth());
 }
 
 void test2()
 {
+	printf("press any key to start test2...\n");
+	getchar();
 	rb_tree<int, std::less<int> > tree;
 	for (int i = 0; i < 1000000; i++)
 	{
-		tree.insert(rand()%10000);
+		tree.insert(rand());
 	}
 	typedef rb_tree<int, std::less<int> >::iterator itor;
 	int count = 0;
@@ -53,7 +52,6 @@ void test2()
 	printf("the depth is :%d\n", tree.depth());
 	printf("maxValue:%d minValue:%d\n", tree.max(), tree.min());
 }
-
 
 int main()
 {

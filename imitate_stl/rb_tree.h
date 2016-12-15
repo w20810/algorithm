@@ -94,7 +94,7 @@ namespace yxSTL
 						pnode = fa;
 						fa = fa->father;
 					}
-					if (pnode->lson != fa)
+					if (pnode->rson != fa)
 						pnode = fa;
 					   	//处理pnode一开始就是root,而且无rson的情况
 				}
@@ -413,10 +413,10 @@ namespace yxSTL
 
 			void erase_rebalance(link_type x) //FIXME:x为实际要被删掉的节点
 			{
-				//FIXME : 前提保证了x一定没有右孩子
+				//FIXME : 前提保证了x最多只有一个孩子
 				if (x == get_root())
 				{
-					if (NULL == x->lson) //size == 1
+					if (NULL == x->lson && NULL == x->rson) //size == 1
 					{
 						put_node(x);
 						header->father = header;
@@ -424,12 +424,25 @@ namespace yxSTL
 						header->rson = header;
 						return ;
 					}
-					header->father = x->lson;
-					header->rson = x->lson;
-					x->lson->father = header;
-					x->lson->color = __rb_tree_black;
-					put_node(x);
-					return ;
+					else if (NULL == x->lson)
+					{
+						header->father = x->rson;
+						header->lson = x->rson;
+						x->rson->father = header;
+						x->rson->color = __rb_tree_black;
+						put_node(x);
+						return ;
+					}
+					else if (NULL == x->rson)
+					{
+						header->father = x->lson;
+						header->rson = x->lson;
+						x->lson->father = header;
+						x->lson->color = __rb_tree_black;
+						put_node(x);
+						return ;
+					}
+					printf("mustn't come here\n");//不可能右这种情况
 				}
 
 				if (x == header->rson)
@@ -437,7 +450,7 @@ namespace yxSTL
 				else if (x == header->lson)
 					header->lson = get_next(x);
 
-				if (__rb_tree_red == x->color)
+				if (__rb_tree_red == x->color) //x为红色，删掉之后不会影响红黑树的性质
 				{
 					if (x == x->father->lson)
 						x->father->lson = x->lson;
@@ -449,27 +462,38 @@ namespace yxSTL
 					return ;
 				}
 
-				if (x->lson != NULL && __rb_tree_red == x->lson->color)
+				//此时x的颜色为黑色，且最多只有一个孩子,孩子的颜色为红色
+				if (__rb_tree_red == color(x->lson) || __rb_tree_red == color(x->rson))
 				{
-					x->lson->color = __rb_tree_black;
-					x->lson->father = x->father;
+					//若孩子节点的颜色为红色，删除x,然后直接把孩子节点变为黑色
+					//这样，红黑树的性质依然保持不变
+					link_type pson = (x->lson ? x->lson : x->rson);
+					pson->color = __rb_tree_black;
+					pson->father = x->father;
 					if (x->father->lson == x)
-						x->father->lson = x->lson;
+						x->father->lson = pson;
 					else
-						x->father->rson = x->lson;
+						x->father->rson = pson;
 					put_node(x);
 					return ;
 				}
 
-				//下面讨论x为黑色,而且其左孩子（有可能为NIL）为黑色
-				link_type cur = x->lson;
+				//默认NIL节点为黑色
+				//下面讨论x为黑色,而且其孩子（有可能为NIL）为黑色
+				
+				link_type cur = NULL;
+				if (x->lson != NULL)
+					cur = x->lson;
+				else if (x->rson != NULL)
+					cur = x->rson;
+			
 				link_type father = x->father;
 				if (x->father->lson == x)
-					x->father->lson = x->lson;
+					x->father->lson = cur;
 				else 
-					x->father->rson = x->lson;
-				if (x->lson != NULL)
-					x->lson->father = x->father;
+					x->father->rson = cur;
+				if (cur != NULL)
+					cur->father = x->father;
 				put_node(x);
 				_erase_rebalance(cur, father);		
 			}
@@ -491,9 +515,11 @@ namespace yxSTL
 				else
 					bro = father->lson;
 
-				if (__rb_tree_red == bro->color)
+				if (__rb_tree_red == bro->color) //FIXME:bro's position is no use
 				{
+					//FIXME
 					//father's color must be black
+					//bro' 2 son's color must be black
 					
 					//swap father's and bro's color
 					father->color = __rb_tree_red;
@@ -503,43 +529,75 @@ namespace yxSTL
 					else
 						rotate_right(father);
 					_erase_rebalance(cur, father);
+					//cur's bro's color is black now.
 				}
 				else //bro's color is black and bro must not NIL
 				{
-					//statu 1 , bro' 2 son's color is black
+					//FIXME
+					//statu 1 , bro' 2 son's color is black(bro's position is no use)
 					if (color(bro->lson) == __rb_tree_black && 
 							color(bro->rson) == __rb_tree_black)
 					{
+						//printf("bro is black, and his 2 son also is black @@@@@\n");
+						//printf("cur is : %p  @@@@@\n", cur);
+						getchar();
 						bro->color = __rb_tree_red;
 						if (__rb_tree_black == father->color)
 							_erase_rebalance(father, father->father);
 						else
 						{
-							father->color = __rb_tree_red;
+							father->color = __rb_tree_black;
 							return ;
 						}
+						return ;
 					}
+				//	if (cur == father->lson)
+				//	{
+
+				//	}
+				//	else
+				//	{
+
+				//	}
+
 					else if (color(bro->lson) == __rb_tree_red &&
 							color(bro->rson) == __rb_tree_black) //statu 2
 					{
-						bro->color = __rb_tree_red;
-						bro->lson->color = __rb_tree_black;
-						rotate_right(bro);
-						_erase_rebalance(cur, father); //to statu 3
+						if (cur == father->lson)
+						{
+							bro->color = __rb_tree_red;
+							bro->lson->color = __rb_tree_black;
+							rotate_right(bro);
+							_erase_rebalance(cur, father); //to statu 3
+						}
+						else
+						{
+							bro->color = father->color;
+							rotate_right(father);
+							if (bro->lson != NULL)
+								bro->lson->color = __rb_tree_black;
+							if (bro->rson != NULL)
+								bro->rson->color = __rb_tree_black;
+						}
 					}
 					else if (color(bro->rson) == __rb_tree_red) //statu3
 					{
-						bro->color = father->color;
-					
 						if (cur == father->lson)
+						{
+							bro->color = father->color;
 							rotate_left(father);
+							if (bro->lson != NULL)
+								bro->lson->color = __rb_tree_black;
+							if (bro->rson != NULL)
+								bro->rson->color = __rb_tree_black;
+						}
 						else
-							rotate_right(father);
-					
-						if (bro->lson != NULL)
-							bro->lson->color = __rb_tree_black;
-						if (bro->rson != NULL)
+						{
+							bro->color = __rb_tree_red;
 							bro->rson->color = __rb_tree_black;
+							rotate_left(bro);
+							_erase_rebalance(cur, father);
+						}
 					}
 				}
 			}
@@ -621,7 +679,7 @@ namespace yxSTL
 				link_type cur = get_root();
 				while (cur != NULL)
 				{
-					if (!cmp(x, cur->value) && !cmp(x, cur->value))
+					if (!cmp(x, cur->value) && !cmp(cur->value, x))//x == cur->value
 						return cur; //隐式转换
 					else if (cmp(x, cur->value))
 						cur = cur->lson;
@@ -692,15 +750,21 @@ namespace yxSTL
 				if (i == end())
 					return ;
 				
+				//printf("find addr:%p\n", i.get());
+				getchar();
 				link_type cur = i.get();
-				if (++i == end()) // 无后继
+				if (NULL == cur->rson) //无右孩子
 				{
 					//ok,直接删掉这个节点
+				//	printf("dirctly\n");
+				//	getchar();
 					erase_rebalance(cur);
 				}
-				else //有后继
+				else //有右孩子
 				{
-					link_type nxt = i.get();
+					link_type nxt = get_next(cur);
+					//printf("indirctly next:%p\n", nxt);
+					getchar();
 					cur->value = nxt->value;
 					//删掉后继节点
 					erase_rebalance(nxt);
@@ -713,6 +777,7 @@ namespace yxSTL
 			void debug()
 			{
 				printf("[ \n");
+				printf("header:(%p) \n", header);
 				_debug(get_root());
 				printf("]\n");
 			}
@@ -721,12 +786,35 @@ namespace yxSTL
 			{
 				if (cur)
 				{
-					printf("addr:%p (%p %p) value:%d color:%s \n", 
-							cur, cur->lson, cur->rson,
+					printf("addr:%p (%p %p) father:%p value:%d color:%s \n", 
+							cur, cur->lson, cur->rson, cur->father,
 						   	cur->value, (cur->color?"black":"red"));
+			//		getchar();
 					_debug(cur->lson);
 					_debug(cur->rson);
 				}
+			}
+
+			bool check_isVaild()
+			{
+				bool ok = true;
+				check_isVaild(get_root(), ok);
+				return ok;
+			}
+
+			int check_isVaild(link_type cur, bool &ok)
+			{
+				if (NULL == cur)
+					return 1;
+
+				int l = check_isVaild(cur->lson, ok);
+				int r = check_isVaild(cur->rson, ok);
+
+				if (l != r)
+					ok = false;
+				if (__rb_tree_black == cur->color)
+					return l + 1;
+				return l;
 			}
 	};
 }//end of yxSTL

@@ -53,9 +53,39 @@ void test2()
 	printf("maxValue:%d minValue:%d\n", tree.max(), tree.min());
 }
 
+void test3()
+{
+	rb_tree <int, std::less<int> > tree;
+	for (int i = 0; i < 10; i++)
+		tree.insert((rand() % 10 ^ 37) % 13);
+	tree.debug();
+	typedef rb_tree<int, std::less<int> >::iterator itor;
+	for (itor it = tree.begin(); it != tree.end(); ++it)
+	{
+		printf("%d ", *it);
+	}
+	printf("\n");
+	while (1)
+	{
+		printf("[ ");
+		for (itor it = tree.begin(); it != tree.end(); ++it)
+		{
+			printf("%d ", *it);
+		}
+		printf("]\n");
+		printf("the tree is vaild : %s\n", (tree.check_isVaild()?"yes":"no"));
+		printf("witch one are you want to erase??\n");
+		int x;
+		scanf("%d", &x);
+		tree.erase(x);
+		tree.debug();
+	}
+}
+
 int main()
 {
-	test1();
-	test2();
+//	test1();
+//	test2();
+	test3();
 	return 0;
 }

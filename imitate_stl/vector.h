@@ -39,7 +39,7 @@ namespace yxSTL
 			{
 				destroy(start, finish);
 				
-				::operator delete[] (&*start); 
+				::operator delete (&*start); 
 				//&*start获取迭代器内部指针，当然vector的迭代器就是指针
 				//此处没有调用析构函数
 				

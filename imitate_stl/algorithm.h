@@ -134,6 +134,15 @@ namespace yxSTL
 	{
 		__make_heap(first, last - first, Compare());
 	}
+
+	template <typename T>
+	struct less
+	{
+		bool operator()(const T& a, const T& b)
+		{
+			return a < b;
+		}
+	};
 }//end yxSTL
 
 #endif      

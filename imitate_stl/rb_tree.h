@@ -540,7 +540,7 @@ namespace yxSTL
 					{
 						//printf("bro is black, and his 2 son also is black @@@@@\n");
 						//printf("cur is : %p  @@@@@\n", cur);
-						getchar();
+						//getchar();
 						bro->color = __rb_tree_red;
 						if (__rb_tree_black == father->color)
 							_erase_rebalance(father, father->father);
@@ -616,6 +616,8 @@ namespace yxSTL
 
 			void destroy_tree(link_type x)
 			{
+				if (NULL == x)
+					return ;
 				if (x->lson)
 					destroy_tree(x->lson);
 				if (x->rson)
@@ -706,6 +708,7 @@ namespace yxSTL
 					header->lson = node;
 					header->rson = node;
 					header->father = node;
+					++count_node;
 					return node;
 				}
 				link_type cur = get_root();
@@ -751,7 +754,7 @@ namespace yxSTL
 					return ;
 				
 				//printf("find addr:%p\n", i.get());
-				getchar();
+				//getchar();
 				link_type cur = i.get();
 				if (NULL == cur->rson) //无右孩子
 				{
@@ -764,7 +767,7 @@ namespace yxSTL
 				{
 					link_type nxt = get_next(cur);
 					//printf("indirctly next:%p\n", nxt);
-					getchar();
+					//getchar();
 					cur->value = nxt->value;
 					//删掉后继节点
 					erase_rebalance(nxt);
@@ -772,6 +775,97 @@ namespace yxSTL
 				//实际被删掉的节点无右子树
 				--count_node;
 				return ;
+			}
+
+			void erase(iterator x)
+			{
+				//printf("find addr:%p\n", i.get());
+				//getchar();
+				link_type cur = x.get();
+				if (NULL == cur->rson) //无右孩子
+				{
+				//ok,直接删掉这个节点
+				//	printf("dirctly\n");
+				//	getchar();
+					erase_rebalance(cur);
+				}
+				else //有右孩子
+				{
+					link_type nxt = get_next(cur);
+					//printf("indirctly next:%p\n", nxt);
+					//getchar();
+					cur->value = nxt->value;
+					//删掉后继节点
+					erase_rebalance(nxt);
+				}
+				//实际被删掉的节点无右子树
+				--count_node;
+				return ;	
+			}
+
+			void clear()
+			{
+				destroy_tree(get_root());
+				header->father = header;
+				header->lson = header;
+				header->rson = header;
+				count_node = 0;
+			}
+
+			iterator lower_bound(const_reference x) // the first result, that result >= x
+			{
+				link_type cur = get_root();
+				while (cur != NULL)
+				{
+					if (!cmp(cur->value, x)) //cur->value >= x
+					{
+						if (cur->lson && !cmp(cur->lson->value, x)) //cur->lson->value >= x
+							cur = cur->lson;
+						else
+							return cur;
+					}
+					else
+						cur = cur->rson;
+				}
+				return end();
+			}
+
+			iterator upper_bound(const_reference x) //the first result, result > x
+			{
+				link_type cur = get_root();
+			   while (cur != NULL)
+			   {
+				  if (cmp(x, cur->value)) //x < cur->value
+				  {
+					  if (cur->lson && cmp(x, cur->lson->value)) // x < cur->lson->value
+						  cur = cur->lson;
+					  else
+						  return cur;
+				  }
+				  else
+					  cur = cur->rson;
+			   }
+				return end();   
+			}
+
+			size_type count(const_reference x)
+			{
+				iterator first = lower_bound(x);
+				iterator last  = upper_bound(x);
+				size_type result = 0;
+				while (first != last)
+				{
+					++result;
+					++first;
+				}
+				return result;
+			}	
+
+			void swap(rb_tree x)
+			{
+				yxSTL::swap(count_node, x.count_node);
+				yxSTL::swap(header, x.header);
+				yxSTL::swap(cmp, x.cmp);
 			}
 
 			void debug()

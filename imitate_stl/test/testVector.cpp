@@ -1,8 +1,10 @@
 // @Created time :2016年12月02日 星期五 13时12分25秒
 #include <iostream>
-#include "vector.h"
+#include "../vector.h"
 using namespace yxSTL;
 using namespace std;
+
+//it's no memorey leaked, checked by valgrind,
 
 struct node
 {

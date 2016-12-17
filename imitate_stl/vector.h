@@ -275,6 +275,16 @@ namespace yxSTL
 				yxSTL::swap(this->finish, tmp.finish);
 				yxSTL::swap(this->end_of_storage, tmp.end_of_storage);
 			}
+
+			bool operator==(vector<T>& tmp)
+			{
+				if (tmp.size() != size())
+					return false;
+				for (size_type i = 0; i < size(); i++)
+					if (tmp[i] != start[i])
+						return false;
+				return true;
+			}
 	};
 }
 

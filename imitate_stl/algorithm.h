@@ -2,6 +2,8 @@
 #ifndef ALGORITHM_H
 #define ALGORITHM_H
 
+#include <cstdio> //for printf to debug
+
 namespace yxSTL
 {
 	//max
@@ -143,6 +145,115 @@ namespace yxSTL
 			return a < b;
 		}
 	};
+
+	template <typename Iterator, typename Compare>
+	void insert_sort(Iterator first, Iterator last, Compare cmp)
+	{
+		_insert_sort(first, last, *first, cmp);
+	}
+
+	template<typename Iterator, typename value_type, typename Compare> //randomAccessIterator
+	void _insert_sort(Iterator first, Iterator last, value_type, Compare cmp)
+	{	
+		if (last - first < 1)
+			return ;	
+		for (Iterator i = first + 1; i != last; ++i)
+		{
+			Iterator j = i - 1;
+			value_type tmp = *i;
+			while (j + 1 != first && cmp(tmp, *j))
+			{
+				*(j + 1) = *j;
+				--j;
+			}
+			*(j + 1) = tmp;
+		}
+	}
+
+	static const int __stl_threshold = 16;
+	
+	template <typename Size>
+	Size __lg(Size n)
+	{
+		Size result = 0;
+		while (n)
+		{
+			++result;
+			n >>= 1;
+		}
+		return result;
+	}
+
+	template <typename Iterator, typename Compare>
+	bool isMedian(Iterator x, Iterator p1, Iterator p2, Compare cmp)
+	{
+		if ((!cmp(*x, *p1) && !cmp(*p2, *x))
+			|| (!cmp(*x, *p2) && !cmp(*p1, *x))) // x >= p1 && p2 >= x || x>= p2 && p1 >=x
+				return true;
+		return false;
+	}
+
+	template <typename Iterator, typename Compare, typename value_type, typename Size>
+	void __sort(Iterator first, Iterator last, Compare cmp, value_type, Size depth, const Size maxDepth)
+	{
+		if (last - first <= __stl_threshold) //个数小于16调用插入排序
+		{
+			insert_sort(first, last, cmp);
+			return ;
+		}
+		if (depth > maxDepth)//深度太大，调用堆排序
+		{
+			make_heap(first, last, cmp); //建堆
+			sort_heap(first, last, cmp); //堆排
+			return ;
+		}
+
+		Iterator median = first;
+		Iterator mid = first + (last - first) / 2;
+		if (isMedian(mid, first, last -1, cmp))
+		{
+			yxSTL::swap(*mid, *median);	
+		}
+		else if (isMedian(last - 1, first, mid, cmp))
+		{
+			yxSTL::swap(*(last - 1), *median);
+		}
+
+		Iterator i = first, j = last - 1;
+		value_type pivot = *first;
+		//printf("%d %d [%d]\n", depth, maxDepth, last - first);
+		while (i != j)
+		{
+			while (i != j && !cmp(*j, pivot)) // j >= pivot
+				--j;
+			yxSTL::swap(*i, *j);
+			while (i != j && !cmp(pivot, *i)) // pivot >= i
+				++i;
+			yxSTL::swap(*i, *j);
+		}
+		*i = pivot;
+		__sort(first, i, cmp, *first, depth + 1, maxDepth);
+		__sort(i + 1, last, cmp, *first, depth + 1, maxDepth);
+	}
+
+	template <typename Iterator, typename value_type>
+	void _sort(Iterator first, Iterator last, value_type)
+	{
+		__sort(first, last, less<value_type>(), *first, first - first, __lg(last - first));
+	}
+
+	template <typename Iterator>
+	void sort(Iterator first, Iterator last)
+	{
+		_sort(first, last, *first);
+	}
+
+	template <typename Iterator, typename Compare>
+	void sort(Iterator first, Iterator last, Compare cmp)
+	{
+		__sort(first, last, cmp, *first, first - first, __lg(last - first));
+	}
+
 }//end yxSTL
 
 #endif      

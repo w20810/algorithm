@@ -17,6 +17,7 @@ namespace yxSTL
 
 	//此处没有优化，标准STL里面用traits技法对类型进行了判断，
 	//如若此类型的析构是可有可无的，那么直接忽略
+	//__type_traits
 	template <typename T>
 	inline void destroy(T* ptr)
 	{
